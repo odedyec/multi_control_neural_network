@@ -5,10 +5,12 @@ classdef NeuralNetworkMultiController < ControllerBase
     properties
         K
         ConvHulls
+        numOfControllers
+        net
     end
     
     methods(Access = public)
-        function obj = NeuralNetworkMultiController(Ks, convex_hulls, gx, n, m, gu)
+        function obj = NeuralNetworkMultiController(n, m, gu, Ks, convex_hulls)
             %MULTICONTROLLER Construct an instance of this class
             %   Detailed explanation goes here
             obj = obj@ControllerBase(n, m, gu);
@@ -18,22 +20,17 @@ classdef NeuralNetworkMultiController < ControllerBase
             obj.ConvHulls = convex_hulls;
         end
         
+        function load_network(obj, net_file)
+            obj.net = importKerasNetwork(net_file);
+        end
+        
         function u = controller_imp(obj, state)
-            i = 1;
-            K = obj.K{i};
-            while true
-%                 if abs(K * state) < 1
-                if obj.Omegas{i}.contains(state)
-                    break
-                end
-                i = i + 1;
-                if i == obj.numOfControllers + 1
-                    i = obj.numOfControllers;
-                    break;
-                end
-                K = obj.K{i};
+            probs = obj.net.predict(reshape(state, 1, length(state), 1));
+            K_alpha = 0;
+            for j=1:length(obj.K)
+                K_alpha = K_alpha + obj.K{j} * probs(j);
             end
-            u = K * state;
+            u = K_alpha * state;
         end
     end
 end

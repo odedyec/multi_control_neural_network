@@ -1,4 +1,4 @@
-classdef ControllerBase
+classdef ControllerBase < handle
     %CONTROLLER Summary of this class goes here
     %   Detailed explanation goes here
     

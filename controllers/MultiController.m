@@ -10,7 +10,7 @@ classdef MultiController < ControllerBase
     end
     
     methods(Access = public)
-        function obj = MultiController(A, B, Rs, Q, Fx, Fu, gx, n, m, gu)
+        function obj = MultiController(n, m, gu, A, B, Rs, Q, Fx, Fu, gx)
             %MULTICONTROLLER Construct an instance of this class
             %   Detailed explanation goes here
             obj = obj@ControllerBase(n, m, gu);
