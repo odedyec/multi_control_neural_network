@@ -60,6 +60,10 @@ classdef Logger < handle
             ctps = obj.elapsed_time / obj.num_of_element;
         end
         
+        function c = cost(obj)
+            c = sum(sum(obj.x .^ 2));
+        end
+        
         function plot(obj, fig, subplots, color, l_width)
             figure(fig);
             n = subplots(1);
@@ -88,7 +92,8 @@ classdef Logger < handle
                     stairs(1:N, obj.u(ind, :),  color,'LineWidth', l_width)
                 end
             end
-        end
+        end        
+        
     end
 end
 
