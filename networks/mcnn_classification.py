@@ -14,73 +14,33 @@ from sklearn.externals import joblib
 import scipy.io as sio
 from keras.layers import Layer
 from keras import backend as K
+import yaml
 
 
-class RBFLayer(Layer):
-    def __init__(self, units, gamma, **kwargs):
-        super(RBFLayer, self).__init__(**kwargs)
-        self.units = units
-        self.gamma = K.cast_to_floatx(gamma)
+import os
+path = os.path.abspath(__file__).split('mcnn_classification.py')[0]
+with open(path+'mcnn_config.yaml') as stream:
+     config_dict = yaml.safe_load(stream)
 
-    def build(self, input_shape):
-        self.mu = self.add_weight(name='mu',
-                                  shape=(int(input_shape[1]), self.units),
-                                  initializer='uniform',
-                                  trainable=True)
-        super(RBFLayer, self).build(input_shape)
-
-    def call(self, inputs):
-        diff = K.expand_dims(inputs) - self.mu
-        l2 = K.sum(K.pow(diff,2), axis=1)
-        res = K.exp(-1 * self.gamma * l2)
-        return res
-
-    def compute_output_shape(self, input_shape):
-        return (input_shape[0], self.units)
-
-
-mat_file = 'mcnn_net.mat'
-
-scaler_filename1 = "scaler_x.save"
-scaler_filename2 = "scaler_y.save"
-
-
-NUM_OF_STATES = 6
-NUM_OF_CONVS = 4
-DATA_FILE = 'data_{}_{}.csv'.format(NUM_OF_STATES, NUM_OF_CONVS)  # 'data_6_100.csv'
-OUTPUT_FILE = 'mcnn_classi_{}_{}.h5'.format(NUM_OF_STATES, NUM_OF_CONVS)
-
+NUM_OF_STATES = config_dict['states']
+NUM_OF_CONVS = config_dict['controllers']
+DATA_FILE = path + 'mcnn_data_{}_{}.csv'.format(NUM_OF_STATES, NUM_OF_CONVS)  # 'data_6_100.csv'
+OUTPUT_FILE = path + 'mcnn_classi_{}_{}.h5'.format(NUM_OF_STATES, NUM_OF_CONVS)
+layers = config_dict['layers']
+nb_epochs = config_dict['epochs']
+nb_batch  = config_dict['batch_size']
+tst_size  = config_dict['train_test_split']
 
 def build_classifier():
     classifier = Sequential()
-    classifier.add(Dense(output_dim=10*NUM_OF_CONVS, input_dim=NUM_OF_STATES, activation='relu'))
-    # classifier.add(Dense(NUM_OF_CONVS, activation='relu'))
-    classifier.add(Dense(3*NUM_OF_CONVS, activation='relu'))
-    classifier.add(Dense(NUM_OF_CONVS, activation='softmax'))
-    classifier.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    return classifier
-
-
-def build_rbf_classifier():
-    classifier = Sequential()
-    classifier.add(Dense(output_dim=20, input_dim=NUM_OF_STATES, activation='relu'))
-    classifier.add(Dense(20, activation='relu'))
-    classifier.add(RBFLayer(10, 0.5))
-    classifier.add(Dense(NUM_OF_CONVS, activation='softmax'))
-    classifier.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
-    return classifier
-
-
-def build_conv_classifier():
-    classifier = Sequential()
-    classifier.add(Conv2D(10*NUM_OF_CONVS, kernel_size=(NUM_OF_STATES, 1), padding='valid',activation='relu', input_shape=(NUM_OF_STATES, 1, 1), name = 'conv_layer'))
-    # classifier.add(
-    #     Conv2D(10, kernel_size=1, padding='valid', activation='relu'))
-    classifier.add(Flatten())
-    # classifier.add(Dense(output_dim=10, input_dim=NUM_OF_STATES, activation='relu'))
-    # classifier.add(Dense(NUM_OF_CONVS, activation='relu'))
-    classifier.add(Dense(3*NUM_OF_CONVS, activation='relu'))
-    classifier.add(Dense(output_dim=NUM_OF_CONVS, activation='softmax'))
+    classifier.add(Dense(output_dim=layers[0], input_dim=NUM_OF_STATES, activation='relu', name='l0'))
+    for i, layer in enumerate(layers):
+        if i == 0:
+            continue
+        if layer == 0:
+            continue
+        classifier.add(Dense(layer, activation='relu', name='l{}'.format(i)))
+    classifier.add(Dense(NUM_OF_CONVS, activation='softmax', name='l_final'))
     classifier.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     return classifier
 
@@ -88,9 +48,7 @@ def build_conv_classifier():
 def load_data(verbose=False):
     X = []
     y = []
-    import os
-    path = os.path.abspath(__file__).split('mcnn_classification.py')[0]
-    with open(path+DATA_FILE, 'r') as f:
+    with open(DATA_FILE, 'r') as f:
         i = 0
         while True:
             x = f.readline()
@@ -121,12 +79,12 @@ def run_and_save():
     #joblib.dump(sc_x, scaler_filename1)
     #joblib.dump(sc_y, scaler_filename2)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=tst_size)
 
 
     # classifier = KerasClassifier(build_fn=build_conv_classifier, epochs=1000, batch_size=72, verbose=1)
     # X = X.reshape((len(X), NUM_OF_STATES, 1, 1))
-    classifier = KerasClassifier(build_fn=build_classifier, epochs=100, batch_size=72, verbose=1)
+    classifier = KerasClassifier(build_fn=build_classifier, epochs=nb_epochs, batch_size=nb_batch, verbose=1)
     res  = classifier.fit(X, y)
 
 
@@ -142,37 +100,6 @@ def run_and_save():
     # print list(map(lambda x: x[0]-x[1], zip(y_pred_list, y_label_list)))
     # print('||E|| = {}'.format(np.sum(np.sum(np.abs(y_lab - y_pred) ** 2, axis=0) ** (1./2))))
     return res.history['acc'][-1]
-
-
-def load_and_test():
-    dat = {}
-    X, y = load_data()
-    sc_x = joblib.load(scaler_filename1)
-    sc_y = joblib.load(scaler_filename2)
-
-    dat['inp_min'] = sc_x.data_min_
-    dat['inp_max'] = sc_x.data_max_
-    dat['out_min'] = sc_y.data_min_
-    dat['out_max'] = sc_y.data_max_
-
-    regressor = KerasRegressor(build_fn=build_regressor, verbose=1)
-    regressor.model = load_model('mcnn.h5')
-    Ws = []
-    bs = []
-    for layer_i in range(len(regressor.model.layers)):
-        w = regressor.model.layers[layer_i].get_weights()[0]
-        b = regressor.model.layers[layer_i].get_weights()[1]
-        print('Layer %s has weights of shape %s and biases of shape %s' % (
-            layer_i, np.shape(w), np.shape(b)))
-        Ws.append(w)
-        bs.append(b)
-    y_pred = regressor.predict(sc_x.transform(X))
-    y_pred_s = sc_y.inverse_transform(y_pred)
-    dat['num_of_layers'] = len(regressor.model.layers)
-    dat['W'] = Ws
-    dat['b'] = bs
-    sio.savemat(mat_file, dat)
-    print('||E|| = {}'.format(np.sum(np.sum(np.abs(y - y_pred) ** 2, axis=0) ** (1. / 2))))
 
 
 import time

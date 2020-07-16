@@ -16,7 +16,8 @@ classdef Logger < handle
         function obj = Logger(N, n, m)
             %LOGGER Construct an instance of this class
             %   Detailed explanation goes here
-            obj.start_time = now;
+%             obj.start_time = tic;
+tic
             
             obj.num_of_element = N;
             obj.x = zeros(n, N);
@@ -53,7 +54,7 @@ classdef Logger < handle
         end
         
         function stop_logging(obj)
-            obj.elapsed_time = second(now - obj.start_time);
+            obj.elapsed_time = toc; %second(now - obj.start_time);
         end
         
         function ctps = CTPS(obj)
