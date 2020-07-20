@@ -17,8 +17,7 @@ classdef Logger < handle
             %LOGGER Construct an instance of this class
             %   Detailed explanation goes here
 %             obj.start_time = tic;
-tic
-            
+            obj.elapsed_time = 0;
             obj.num_of_element = N;
             obj.x = zeros(n, N);
             obj.u = zeros(m, N);
@@ -26,6 +25,15 @@ tic
             obj.u_counter = 0;
         end
         
+        function tic(obj)
+            tic;
+        end
+        
+        function toc_and_sum(obj)
+            te = toc;
+            obj.elapsed_time = obj.elapsed_time + te * 1000;
+        end
+            
         function add_x(obj, x)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
@@ -53,16 +61,15 @@ tic
             obj.add_x(x);
         end
         
-        function stop_logging(obj)
-            obj.elapsed_time = toc; %second(now - obj.start_time);
-        end
-        
         function ctps = CTPS(obj)
             ctps = obj.elapsed_time / obj.num_of_element;
         end
         
-        function c = cost(obj)
-            c = sum(sum(obj.x .^ 2));
+        function c = cost(obj, ref)
+            if nargin == 1
+                ref = obj.x * 0;
+            end
+            c = sum(sum((obj.x - ref) .^ 2));
         end
         
         function plot(obj, fig, subplots, color, l_width)

@@ -26,7 +26,7 @@ classdef NeuralNetworkMultiController < ControllerBase
         end
         
         function u = controller_imp(obj, state)
-            probs = obj.net.predict(reshape(state, 1, length(state), 1));
+            probs = obj.net.predict(reshape(state, 1, length(state), 1), 'ExecutionEnvironment', 'cpu');
             K_alpha = 0;
             for j=1:length(obj.K)
                 K_alpha = K_alpha + obj.K{j} * probs(j);

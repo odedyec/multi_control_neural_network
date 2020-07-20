@@ -16,8 +16,10 @@ from keras.layers import Layer
 from keras import backend as K
 import yaml
 
-
+import time
 import os
+
+
 path = os.path.abspath(__file__).split('mcnn_classification.py')[0]
 with open(path+'mcnn_config.yaml') as stream:
      config_dict = yaml.safe_load(stream)
@@ -71,38 +73,23 @@ def load_data(verbose=False):
 
 def run_and_save():
     X, y, y_lab = load_data()
-    #sc_x = MinMaxScaler()
-    #sc_y = MinMaxScaler()
-    #X_sc = sc_x.fit_transform(X)
-    #y_sc = sc_y.fit_transform(y)
-
-    #joblib.dump(sc_x, scaler_filename1)
-    #joblib.dump(sc_y, scaler_filename2)
-
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=tst_size)
 
-
-    # classifier = KerasClassifier(build_fn=build_conv_classifier, epochs=1000, batch_size=72, verbose=1)
-    # X = X.reshape((len(X), NUM_OF_STATES, 1, 1))
     classifier = KerasClassifier(build_fn=build_classifier, epochs=nb_epochs, batch_size=nb_batch, verbose=1)
     res  = classifier.fit(X, y)
 
 
 
-    y_pred = classifier.predict(X)
+    #y_pred = classifier.predict(X)
+    pred_start_time = time.time()
     y_pred2 =  classifier.predict_proba(X)
-    # y_pred_s = sc_y.inverse_transform(y_pred)
+    stop_time = time.time()
+    print ("Pred time for {} samples is {} seconds. CTPS={}".format(len(X), stop_time - pred_start_time, (stop_time - pred_start_time) / len(X)))
+    
     classifier.model.save(OUTPUT_FILE)
-    y_pred_list = list(y_pred)
-    y_label_list = list(map(lambda x: int(x[0]-1), y_lab))
-    # print y_pred_list
-    # print y_label_list
-    # print list(map(lambda x: x[0]-x[1], zip(y_pred_list, y_label_list)))
-    # print('||E|| = {}'.format(np.sum(np.sum(np.abs(y_lab - y_pred) ** 2, axis=0) ** (1./2))))
     return res.history['acc'][-1]
 
 
-import time
 now = time.time()
 for i in range(1):
     print run_and_save(),

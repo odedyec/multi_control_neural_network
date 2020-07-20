@@ -14,9 +14,10 @@ end
 logger = Logger(steps, plant.n, plant.m);
 x = x0;
 for step=1:steps
+    logger.tic();
     u = controller.control(x - ref(:, step));
+    logger.toc_and_sum();
     logger.log(x, u);
     x = plant.propagate(x, u);
 end  
-logger.stop_logging
 end

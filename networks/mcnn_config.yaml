@@ -1,6 +1,6 @@
 states: 2
 controllers: 6
-epochs: 1000
+epochs: 100
 batch_size: 6
 train_test_split: 0
 layers:
