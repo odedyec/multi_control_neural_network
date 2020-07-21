@@ -29,6 +29,31 @@ classdef MultiController < ControllerBase
             end
         end
         
+        function plot(obj, varargin)
+            p = inputParser;
+            validScalarPosNum = @(x) isnumeric(x) && isscalar(x) && (x > 0);
+            addOptional(p, 'Fig',  99, validScalarPosNum);
+            addOptional(p, 'Clear', 1, validScalarPosNum);
+            addOptional(p, 'Colors', 0, validScalarPosNum);
+            addOptional(p, 'Alpha', 0, validScalarPosNum);
+            parse(p, varargin{:});
+            if ~p.Results.Colors
+                colors = colormap('jet'); 
+                colors = colors(ceil(linspace(1, 64, obj.numOfControllers)), :);
+            end
+            clear_fig = p.Results.Clear;
+            figure(p.Results.Fig);
+            if clear_fig
+                clf;
+            end
+            hold on;
+            for i=obj.numOfControllers:-1:1
+                obj.Omegas{i}.plot('alpha', p.Results.Alpha, 'color', colors(i, :));
+                plot(obj.Omegas{i}.V(:, 1), obj.Omegas{i}.V(:, 2), 'x', 'Color', colors(i, :), 'MarkerSize', 12, 'LineWidth', 1)
+            end
+            hold off
+        end
+        
         function u = controller_imp(obj, state)
             i = 1;
             K = obj.K{i};
