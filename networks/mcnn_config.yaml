@@ -4,6 +4,5 @@ epochs: 1000
 batch_size: 6
 train_test_split: 0
 layers:
-- 32
-- 16
-- 8
+- 160
+- 80

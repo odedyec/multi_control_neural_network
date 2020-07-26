@@ -29,6 +29,11 @@ classdef MultiController < ControllerBase
             end
         end
         
+        function colors = get_color_space(obj)
+            colors = colormap('jet'); 
+            colors = colors(ceil(linspace(1, 64, obj.numOfControllers)), :);
+        end
+        
         function plot(obj, varargin)
             p = inputParser;
             validScalarPosNum = @(x) isnumeric(x) && isscalar(x) && (x > 0);
@@ -38,8 +43,7 @@ classdef MultiController < ControllerBase
             addOptional(p, 'Alpha', 0, validScalarPosNum);
             parse(p, varargin{:});
             if ~p.Results.Colors
-                colors = colormap('jet'); 
-                colors = colors(ceil(linspace(1, 64, obj.numOfControllers)), :);
+                colors = obj.get_color_space();
             end
             clear_fig = p.Results.Clear;
             figure(p.Results.Fig);
@@ -54,9 +58,8 @@ classdef MultiController < ControllerBase
             hold off
         end
         
-        function u = controller_imp(obj, state)
+        function i = get_controller_index_from_state(obj, state)
             i = 1;
-            K = obj.K{i};
             while true
 %                 if abs(K * state) < 1
                 if obj.Omegas{i}.contains(state)
@@ -67,9 +70,27 @@ classdef MultiController < ControllerBase
                     i = obj.numOfControllers;
                     break;
                 end
-                K = obj.K{i};
             end
+        end
+        
+        function u = controller_imp(obj, state)
+            i = obj.get_controller_index_from_state(state);
+            K = obj.K{i};
             u = K * state;
+        end
+        
+        function plot_quiver_on_MAS(obj, logger)
+            obj.plot('Clear', 1, 'Fig', 98)
+            hold on;
+            q_colors = obj.get_color_space();
+            for i=1:logger.num_of_element-1
+                x = logger.x(1, i);
+                y = logger.x(2, i);
+                xx = logger.x(1, i+1) - logger.x(1, i);
+                yy = logger.x(2, i+1) - logger.x(2, i);
+                ki = obj.get_controller_index_from_state([x;y]);
+                quiver(x, y, xx, yy, 'Color', q_colors(ki, :), 'LineWidth', 2)
+            end
         end
     end
 end

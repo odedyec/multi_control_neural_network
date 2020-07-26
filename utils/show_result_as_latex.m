@@ -7,7 +7,7 @@ comp_ctps = result_matrix(comp_id, 2);
 for i=1:size(result_matrix, 1)
     cost = result_matrix(i, 1);
     ctps = result_matrix(i, 2);
-    fprintf('			{$ %s $} &%.0f &%.4f &%.1f\\%% &\\times%.1f \\\\ \n', labels{i},...
+    fprintf('			{$ %s $} &%.0f &%.4f &%.1f\\%% & $\\times%.1f$ \\\\ \n', labels{i},...
     cost, ctps , comp_cost/cost*100 , comp_ctps/ctps);
 end
 

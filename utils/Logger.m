@@ -50,7 +50,6 @@ classdef Logger < handle
             %   Detailed explanation goes here
             if obj.u_counter == obj.num_of_element
                 error('Logger is Full. Can not add more elements to logger.')
-                return
             end
             obj.u_counter = obj.u_counter + 1;
             obj.u(:, obj.u_counter) = u;
@@ -72,7 +71,10 @@ classdef Logger < handle
             c = sum(sum((obj.x - ref) .^ 2));
         end
         
-        function plot(obj, fig, subplots, color, l_width)
+        function plot(obj, fig, subplots, color, l_width, indices_to_plot)
+            if nargin < 6
+                indices_to_plot = 1:N;
+            end
             figure(fig);
             n = subplots(1);
             m = subplots(2);
@@ -80,6 +82,7 @@ classdef Logger < handle
             for i=1:n
                 for j=1:m
                     ind = (i-1) * m + j;
+                    if ~(ind==indices_to_plot); continue; end
                     subplot(n, m, ind)
                     hold on
                     stairs(1:N, obj.x(ind, :),  color,'LineWidth', l_width)

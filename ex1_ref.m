@@ -45,9 +45,10 @@ colors = {'b', 'r-', 'k', 'm.-', 'g', 'c'};
 num_of_controllers = length(all_controllers);
 
 %%% Setup inital conditions, ref, and run-time
-x0 = [-3; 2];
-sim_time = 3000;
-ref = random_step_signal_generator(2, sim_time, sim_time/30, [-12.5 12.5; 0 0]);
+x0 = [-23; 2];
+sim_time = 30;
+% ref = random_step_signal_generator(2, sim_time, sim_time/30, [-12.5 12.5; 0 0]);
+ref = [0;0];
 %%%% Run all control systems and plot results
 result_matrix = zeros(length(all_controllers), 2);
 clc;
@@ -56,6 +57,9 @@ for controller_id = 1:num_of_controllers
     controller = all_controllers{controller_id};
     controller_label = labels{controller_id};
     logger = run_system(plant, controller, x0, sim_time, ref);
+    if strcmp(controller_label, 'MC')
+        cont_mc.plot_quiver_on_MAS(logger);xlabel('x_1');ylabel('x_2');axis([-25, 0.5, -0.2, 5])
+    end
     fprintf('%s J=%.2f,  CTPS is %.5f ms\n', controller_label, logger.cost(ref), logger.CTPS);
     result_matrix(controller_id, :) = [logger.cost(ref), logger.CTPS];
     logger.plot(1, [2; 1], colors{controller_id}, 0.7*(num_of_controllers - controller_id)+1, [0, 1])
