@@ -3,7 +3,9 @@
 This is a matlab library for MC and NNMC control schemes.
 You will also need to use the MPT library.
 
-You Need Matlab 2018 or newer
+You Need Matlab 2018 or newer.
+
+You need the MPT toolbox from [here](https://www.mpt3.org/). The toolbox is free under GNU licence. The MPT3.0 is attached to this repo but no changes were made.
 
 There are pretrained networks in the `networks` folder. 
 You can train your own model if you have Python and Keras installed.
