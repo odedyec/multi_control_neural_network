@@ -73,7 +73,7 @@ classdef Logger < handle
         
         function plot(obj, fig, subplots, color, l_width, indices_to_plot)
             if nargin < 6
-                indices_to_plot = 1:N;
+                indices_to_plot = 1:size(obj.x, 1);
             end
             figure(fig);
             n = subplots(1);

@@ -14,12 +14,14 @@ classdef ICController < ControllerBase
         C
         A
         B
+        K_outer
         opts
     end
     
     methods(Access = public)
         function obj = ICController(n, m, gu, A, B, K, Fx, Fu, gx, K_outer)
             obj = obj@ControllerBase(n, m, gu);sys = LTISystem('A', A+B*K);
+            obj.K_outer = K_outer;
             obj.n = n;
             obj.m = m;
             obj.K = K;
@@ -49,9 +51,10 @@ classdef ICController < ControllerBase
                 ro = state-rv;
                 c = s(end);
                 xv=rv/c;
-                s1 = linprog([zeros(1, obj.m) 1]',[obj.C.A*obj.B -obj.C.b],-obj.C.A*obj.A*xv,[],[],[obj.output_lower_sat 0], [obj.output_upper_sat 1], obj.opts);
-                uv=s1(1);
-                u = uv*c + obj.K*ro;
+%                 s1 = linprog([zeros(1, obj.m) 1]',[obj.C.A*obj.B -obj.C.b],-obj.C.A*obj.A*xv,[],[],[obj.output_lower_sat' 0], [obj.output_upper_sat' 1], obj.opts);
+%                 uv=s1(1);
+%                 u = uv*c + obj.K*ro;
+                u = obj.K_outer * rv + obj.K * ro;
             end
         end
     end
